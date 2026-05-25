@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payment Success</title>
+
+<style>
+body {
+  margin:0;
+  font-family: Arial;
+  background: linear-gradient(135deg,#0f172a,#020617);
+  color:white;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+
+/* CARD */
+.card {
+  width:90%;
+  max-width:400px;
+  background:rgba(255,255,255,0.05);
+  border-radius:20px;
+  padding:25px;
+  text-align:center;
+  backdrop-filter: blur(10px);
+  box-shadow:0 20px 50px rgba(0,0,0,0.5);
+}
+
+/* ICON */
+.check {
+  font-size:50px;
+  color:#22c55e;
+}
+
+/* DETAILS */
+.details {
+  margin-top:20px;
+  text-align:left;
+}
+
+.details p {
+  margin:10px 0;
+  font-size:14px;
+}
+
+/* BUTTON */
+button {
+  width:100%;
+  padding:12px;
+  margin-top:20px;
+  border:none;
+  border-radius:10px;
+  background:#22c55e;
+  color:white;
+  cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+
+  <div class="check">✅</div>
+  <h2>Payment Successful</h2>
+  <p>Your data will be delivered shortly</p>
+
+  <div class="details">
+    <p><b>📱 Phone:</b> <span id="phone"></span></p>
+    <p><b>📦 Bundle:</b> <span id="bundle"></span></p>
+    <p><b>💰 Amount:</b> <span id="amount"></span></p>
+    <p><b>🔑 Ref:</b> <span id="ref"></span></p>
+  </div>
+
+  <button onclick="goHome()">Back to Home</button>
+
+</div>
+
+<script>
+// Load from URL
+const params = new URLSearchParams(window.location.search);
+
+document.getElementById("phone").innerText = params.get("phone");
+document.getElementById("bundle").innerText = params.get("bundle");
+document.getElementById("amount").innerText =
+  "GH₵" + (params.get("amount") / 100).toFixed(2);
+document.getElementById("ref").innerText = params.get("ref");
+
+function goHome(){
+  window.location.href = "index.html";
+}
+</script>
+
+</body>
+</html>

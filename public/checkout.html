@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Premium Checkout</title>
+
+<script src="https://js.paystack.co/v1/inline.js"></script>
+
+<style>
+body {
+  margin:0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  overflow:hidden;
+  color:white;
+}
+
+/* 🔥 IMPORTANT FIX: background MUST NOT block clicks */
+body::before {
+  content:"";
+  position:fixed;
+  inset:0;
+  background: conic-gradient(red, orange, yellow, green, cyan, blue, violet, red);
+  animation: spin 20s linear infinite;
+  opacity:0.12;
+  z-index:-2;
+  pointer-events:none;
+}
+
+@keyframes spin {
+  200% { transform: rotate(360deg); }
+}
+
+/* canvas background */
+#bg {
+  position:fixed;
+  inset:0;
+  z-index:-3;
+  pointer-events:none;
+}
+
+.btn-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.btn-row button {
+  width: 50%;
+}
+
+/* card */
+.container {
+  position:relative;
+  z-index:5; /* 🔥 ensure it's ABOVE everything */
+  width:90%;
+  max-width:420px;
+  padding:25px;
+  border-radius:20px;
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(20px);
+  border:1px solid rgba(255,255,255,0.2);
+}
+
+/* 🌈 rainbow border FIXED */
+.container::after {
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:20px;
+  padding:2px;
+  background: linear-gradient(45deg, red, orange, yellow, green, cyan, blue, violet);
+
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+
+  opacity:0;
+  pointer-events:none;
+}
+
+.container:hover::after {
+  opacity:1;
+  animation: hue 2s linear infinite;
+}
+
+@keyframes hue {
+  100% { filter: hue-rotate(360deg); }
+}
+
+/* steps */
+.step { display:none; }
+.active { display:block; }
+
+/* input FIX */
+input {
+  width:93%;
+  padding:14px;
+  border-radius:10px;
+  border:none;
+  margin-top:10px;
+  background:rgb(255, 255, 255);
+  color:rgb(0, 0, 0);
+  position:relative;
+  z-index:10; /* 🔥 ensures clickable */
+}
+
+input:focus {
+  outline:none;
+  box-shadow:0 0 10px #00f260;
+}
+
+/* buttons */
+button {
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:10px;
+  margin-top:15px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.next { background:#00f260; }
+.back { background:#ffffff; }
+.pay { background:#00f260; }
+
+.progress {
+  height:6px;
+  background:#333;
+  border-radius:10px;
+  margin-bottom:20px;
+}
+
+.progress-bar {
+  height:100%;
+  width:50%;
+  background:#00f260;
+  transition:0.3s;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="bg"></canvas>
+
+<div class="container" id="mainBox">
+
+  <div class="progress">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <!-- STEP 1 -->
+  <div class="step active" id="step1">
+    <h3>🛜 Enter Phone Number </h3>
+
+    <p><b>Bundle:</b> <span id="bundle"></span></p>
+    <p><b>Price:</b> <span id="price"></span></p><br><hr>
+     <p>Recipient number</p>
+
+
+    <input type="tel" id="phone" placeholder="📞 e.g.055xxxxxxx">
+    <p id="phoneStatus"></p>
+
+    <p style="font-size: 13px;">Please provide the phone number that will receive the data dundle here.</p>
+
+    <div class="btn-row">
+  <button class="back" onclick="goHome()">← Back to store</button>
+  <button class="next" onclick="goStep2()">Next →</button>
+</div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step" id="step2">
+    <h3 style="text-align: center; font-size: 30px; margin: 0%;">Review Transaction</h3><hr><br>
+    <p style="font-size: 13px;">Data will be sent to this mobile number</p>
+
+    <p><b>Phone:</b> <span id="r_phone"></span></p>
+    <p><b>Bundle:</b> <span id="r_bundle"></span></p>
+    <p><b>Price:</b> <span id="r_price"></span></p>
+   
+    <button class="pay" onclick="pay()">Confirm & Pay</button>
+    <button class="back" onclick="back()">← Back</button>
+  </div>
+
+</div>
+
+<div id="success" style="display:none;text-align:center;">
+  <h2>🎉 Payment Successful</h2>
+
+  <!-- 👇 NEW: message -->
+  <p id="redirectText">
+    Redirecting to home in 5 seconds...
+  </p>
+
+  <!-- 👇 NEW: manual button -->
+  <button onclick="goHome()" style="margin-top:20px;">
+    Back to Store
+  </button>
+</div>
+
+<script>
+// get URL data
+const params = new URLSearchParams(window.location.search);
+const bundle = params.get("bundle");
+const price = params.get("price");
+
+// show data
+document.getElementById("bundle").innerText = bundle;
+document.getElementById("price").innerText =
+  "GH₵" + (price/100).toFixed(2);
+
+// go home
+function goHome(){
+  window.location.href = "index.html";
+}
+
+// validate phone
+const phoneInput = document.getElementById("phone");
+const status = document.getElementById("phoneStatus");
+
+phoneInput.addEventListener("input", () => {
+  if (/^0\d{9}$/.test(phoneInput.value)) {
+    status.innerText = "✔ Valid number";
+    status.style.color = "lightgreen";
+  } else {
+    status.innerText = "✖ Invalid number";
+    status.style.color = "salmon";
+  }
+});
+
+// go to step 2
+function goStep2(){
+  const phone = phoneInput.value;
+
+  if(!/^0\d{9}$/.test(phone)){
+    alert("Enter valid Ghana number");
+    return;
+  }
+
+  document.getElementById("r_phone").innerText = phone;
+  document.getElementById("r_bundle").innerText = bundle;
+  document.getElementById("r_price").innerText =
+    "GH₵" + (price/100).toFixed(2);
+
+  document.getElementById("step1").classList.remove("active");
+  document.getElementById("step2").classList.add("active");
+
+  document.getElementById("progressBar").style.width = "100%";
+}
+
+// back to step 1
+function back(){
+  document.getElementById("step2").classList.remove("active");
+  document.getElementById("step1").classList.add("active");
+  document.getElementById("progressBar").style.width = "50%";
+}
+
+// PAYSTACK
+function pay(){
+  const phone = phoneInput.value;
+
+  if(!/^0\d{9}$/.test(phone)){
+    alert("Invalid phone");
+    return;
+  }
+
+  let handler = PaystackPop.setup({
+    key: "pk_test_258a937224fc0863a48db2da04f684a125753264",
+    email: phone + "@pay.com",
+    amount: parseInt(price),
+    currency: "GHS",
+
+    callback: function(response){
+      alert("Payment successful!");
+
+      document.getElementById("mainBox").style.display="none";
+      document.getElementById("success").style.display="block";
+
+      // 🔥 COUNTDOWN + AUTO REDIRECT
+      let count = 5;
+      const text = document.getElementById("redirectText");
+
+      const timer = setInterval(() => {
+        count--;
+
+        text.innerText = "Redirecting to home in " + count + " seconds...";
+
+        if(count === 0){
+          clearInterval(timer);
+          goHome();
+        }
+      }, 1000);
+    },
+
+    onClose: function(){
+      alert("Payment cancelled");
+      goHome();
+    }
+  });
+
+  handler.openIframe();
+}
+</script>
+
+</body>
+</html>
