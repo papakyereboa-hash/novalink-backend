@@ -75,30 +75,70 @@ app.post("/api/buy-data", async (req, res) => {
 
   try {
 
+    console.log("REQUEST RECEIVED");
+
+    console.log(req.body);
+
     const { phone, volumeInMB } = req.body;
 
+    console.log("PHONE:", phone);
+
+    console.log("VOLUME:", volumeInMB);
+
+    const payload = {
+
+      phone: phone,
+
+      volumeInMB: volumeInMB,
+
+      networkType: "mtn"
+
+    };
+
+    console.log("SENDING TO REMADATA:");
+
+    console.log(payload);
+
     const response = await axios.post(
+
       "https://remadata.com/api/buy-data",
+
+      payload,
+
       {
-        phone: phone,
-        volumeInMB: volumeInMB,
-        networkType: "mtn"
-      },
-      {
+
         headers: {
+
           "X-API-KEY": process.env.REMA_API_KEY,
+
           "Content-Type": "application/json"
+
         }
+
       }
+
     );
+
+    console.log("REMADATA RESPONSE:");
+
+    console.log(response.data);
 
     res.json(response.data);
 
   } catch (err) {
 
+    console.log("FULL ERROR:");
+
     console.log(err.response?.data || err.message);
 
-    res.status(500).send("Error purchasing data");
+    res.status(500).json({
+
+      success: false,
+
+      error: err.response?.data || err.message
+
+    });
+
   }
 
 });
@@ -106,6 +146,8 @@ app.post("/api/buy-data", async (req, res) => {
 app.get("/api/check-order/:ref", async (req, res) => {
 
   try {
+
+    console.log("REQUEST RECEIVED");
 
     const ref = req.params.ref;
 
