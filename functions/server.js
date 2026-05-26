@@ -16,48 +16,47 @@ app.get("/", (req, res) => {
 });
 
 // DATABASE CONNECTION
-const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT,
-  ssl: {
-    rejectUnauthorized: false
-  }
-});
+// const pool = new Pool({
+//   user: process.env.DB_USER,
+//   host: process.env.DB_HOST,
+//   database: process.env.DB_NAME,
+//   password: process.env.DB_PASSWORD,
+//   port: process.env.DB_PORT,
+//   ssl: {
+//     rejectUnauthorized: false
+//   }
+// });
 
 // GET PLANS
-app.get("/api/plans", async (req, res) => {
-  try {
-    const result = await pool.query("SELECT * FROM mtn_plans");
-    res.json(result.rows);
+//app.get("/api/plans", async (req, res) => {
+  //try {
+   // const result = await pool.query("SELECT * FROM mtn_plans");
+   // res.json(result.rows);
 
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Error fetching plans");
-  }
-});
+  //} catch (err) {
+   // console.error(err);
+   // res.status(500).send("Error fetching plans");
+//  }
+//});
 
 // CREATE USER
-app.post("/api/users", async (req, res) => {
-  try {
-    const { email, password } = req.body;
+// app.post("/api/users", async (req, res) => {
+//   try {
+//     const { email, password } = req.body;
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+//     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const result = await pool.query(
-      "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *",
-      [email, hashedPassword]
-    );
+//     const result = await pool.query(
+//       "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *",
+//       [email, hashedPassword]
+//     );
 
-    res.json(result.rows[0]);
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Error creating user");
-  }
-});
+//     res.json(result.rows[0]);
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).send("Error creating user");
+//   }
+// });
 
 // GET REMADATA BUNDLES
 app.get("/api/remadata-bundles", async (req, res) => {
