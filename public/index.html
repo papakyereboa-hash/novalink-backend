@@ -186,12 +186,14 @@ body{
 
 /* footer */
 .footer{
-  background-color:rgb(255, 255, 255);
+  background-color:white;
   color:black;
   text-align:center;
-  padding:12px;
-  margin:30px;
-  max-width: 100%;
+  padding:15px;
+  width:100%;
+  margin:0;
+  margin-top:30px;
+  box-sizing:border-box;
 }
 
 </style>
@@ -253,9 +255,9 @@ body{
   </div>
 
   <div class="card-body">
-    <div class="price">GH₵ 4.20</div>
+    <div class="price">GH₵ 4.50</div>
     <div class="don">No Expiry</div>
-    <button class="buy-btn" onclick="buy('1GB',4.20)">
+    <button class="buy-btn" onclick="buy('1GB',4.50)">
       Buy Now
     </button>
   </div>
@@ -491,6 +493,56 @@ function buy(bundle, price){
 }
 
 </script>
+
+<!-- FLOATING CONTACT BUTTONS -->
+<div class="floating-buttons">
+
+  <!-- Gmail -->
+  <a href="mailto:papakyereboa@gmail.com" class="gmail-btn" target="_blank">
+    <img src="https://cdn-icons-png.flaticon.com/512/732/732200.png">
+  </a>
+
+  <!-- WhatsApp -->
+  <a href="https://wa.me/233554017272" class="whatsapp-btn" target="_blank">
+    <img src="https://cdn-icons-png.flaticon.com/512/733/733585.png">
+  </a>
+
+</div>
+
+<style>
+
+.floating-buttons{
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  display:flex;
+  flex-direction:column;
+  gap:15px;
+  z-index:999;
+}
+
+.floating-buttons a{
+  width:60px;
+  height:60px;
+  border-radius:50%;
+  background:white;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  box-shadow:0 5px 15px rgba(0,0,0,0.3);
+  transition:0.3s;
+}
+
+.floating-buttons a:hover{
+  transform:scale(1.1);
+}
+
+.floating-buttons img{
+  width:34px;
+  height:34px;
+}
+
+</style>
 
 </body>
 </html>
