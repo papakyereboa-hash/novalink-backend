@@ -7,13 +7,12 @@ require("dotenv").config();
 
 const app = express();
 
-app.use(cors());
-app.use(express.json());
-
-// TEST ROUTE
 app.get("/", (req, res) => {
   res.send("Backend is running");
 });
+
+app.use(cors());
+app.use(express.json());
 
 // DATABASE CONNECTION
 const pool = new Pool({
