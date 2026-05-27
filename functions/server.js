@@ -7,6 +7,10 @@ require("dotenv").config();
 
 const app = express();
 
+app.get("/health", (req, res) => {
+  res.send("Server is healthy");
+});
+
 app.get("/", (req, res) => {
   res.send("Backend is running");
 });
