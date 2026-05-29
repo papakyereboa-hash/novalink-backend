@@ -1,9 +1,10 @@
+require("dotenv").config();
+
 const axios = require("axios");
 const bcrypt = require("bcrypt");
 const express = require("express");
 const cors = require("cors");
 const { Pool } = require("pg");
-require("dotenv").config();
 
 const app = express();
 
@@ -15,7 +16,13 @@ app.get("/", (req, res) => {
   res.send("Backend is running");
 });
 
-app.use(cors());
+app.use(
+  cors({
+    origin: ["https://papakyereboa-hash.github.io"],
+    methods: ["GET", "POST"],
+    credentials: true
+  })
+);
 app.use(express.json());
 
 // DATABASE CONNECTION
