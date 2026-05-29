@@ -5,17 +5,22 @@ const bcrypt = require("bcrypt");
 const express = require("express");
 const cors = require("cors");
 const { Pool } = require("pg");
+const rateLimit = require("express-rate-limit");
+const helmet = require("helmet");
 
 const app = express();
 
-app.get("/health", (req, res) => {
-  res.send("Server is healthy");
+// RATE LIMITER
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: {
+    success: false,
+    message: "Too many requests. Please try again later."
+  }
 });
 
-app.get("/", (req, res) => {
-  res.send("Backend is running");
-});
-
+// SECURITY MIDDLEWARE
 app.use(
   cors({
     origin: ["https://papakyereboa-hash.github.io"],
@@ -23,7 +28,21 @@ app.use(
     credentials: true
   })
 );
+
+app.use(limiter);
+
+app.use(helmet());
+
 app.use(express.json());
+
+// HEALTH ROUTES
+app.get("/health", (req, res) => {
+  res.send("Server is healthy");
+});
+
+app.get("/", (req, res) => {
+  res.send("Backend is running");
+});
 
 // DATABASE CONNECTION
 const pool = new Pool({
@@ -37,18 +56,26 @@ const pool = new Pool({
 // GET PLANS
 app.get("/api/plans", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM mtn_plans");
+
+    const result = await pool.query(
+      "SELECT * FROM mtn_plans"
+    );
+
     res.json(result.rows);
 
   } catch (err) {
+
     console.error(err);
+
     res.status(500).send("Error fetching plans");
   }
 });
 
 // CREATE USER
 app.post("/api/users", async (req, res) => {
+
   try {
+
     const { email, password } = req.body;
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -61,13 +88,16 @@ app.post("/api/users", async (req, res) => {
     res.json(result.rows[0]);
 
   } catch (err) {
+
     console.error(err);
+
     res.status(500).send("Error creating user");
   }
 });
 
 // GET REMADATA BUNDLES
 app.get("/api/remadata-bundles", async (req, res) => {
+
   try {
 
     const response = await axios.get(
@@ -84,9 +114,13 @@ app.get("/api/remadata-bundles", async (req, res) => {
 
   } catch (err) {
 
-    console.error(err.response?.data || err.message);
+    console.error(
+      err.response?.data || err.message
+    );
 
-    res.status(500).send("Error fetching RemaData bundles");
+    res.status(500).send(
+      "Error fetching RemaData bundles"
+    );
   }
 });
 
@@ -99,6 +133,84 @@ app.post("/api/buy-data", async (req, res) => {
     console.log(req.body);
 
     const { phone, volumeInMB } = req.body;
+
+    if (!phone || !volumeInMB) {
+  return res.status(400).json({
+    success: false,
+    message: "Phone and volume are required"
+  });
+}
+
+// INITIALIZE PAYSTACK PAYMENT
+app.post("/api/paystack/initialize", async (req, res) => {
+
+  try {
+
+    const { email, amount, phone, volumeInMB } = req.body;
+
+    if (!email || !amount || !phone || !volumeInMB) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields"
+      });
+    }
+
+    const reference = `NL-${uuidv4()}`;
+
+    const response = await axios.post(
+      "https://api.paystack.co/transaction/initialize",
+      {
+        email,
+        amount: amount * 100,
+        reference,
+        metadata: {
+          phone,
+          volumeInMB
+        }
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+          "Content-Type": "application/json"
+        }
+      }
+    );
+
+    res.json({
+      success: true,
+      data: response.data.data
+    });
+
+  } catch (err) {
+
+    console.log(
+      err.response?.data || err.message
+    );
+
+    res.status(500).json({
+      success: false,
+      message: "Payment initialization failed"
+    });
+  }
+});
+
+const cleanPhone = phone.toString().trim();
+
+const ghanaPhoneRegex = /^0\d{9}$/;
+
+if (!ghanaPhoneRegex.test(cleanPhone)) {
+  return res.status(400).json({
+    success: false,
+    message: "Invalid Ghana phone number"
+  });
+}
+
+if (isNaN(volumeInMB)) {
+  return res.status(400).json({
+    success: false,
+    message: "Invalid volume"
+  });
+}
 
     console.log("PHONE:", phone);
     console.log("VOLUME:", volumeInMB);
@@ -131,7 +243,10 @@ app.post("/api/buy-data", async (req, res) => {
   } catch (err) {
 
     console.log("FULL ERROR:");
-    console.log(err.response?.data || err.message);
+
+    console.log(
+      err.response?.data || err.message
+    );
 
     res.status(500).json({
       success: false,
@@ -162,9 +277,13 @@ app.get("/api/check-order/:ref", async (req, res) => {
 
   } catch (err) {
 
-    console.log(err.response?.data || err.message);
+    console.log(
+      err.response?.data || err.message
+    );
 
-    res.status(500).send("Error checking order");
+    res.status(500).send(
+      "Error checking order"
+    );
   }
 });
 
@@ -174,3 +293,5 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+const { v4: uuidv4 } = require("uuid");
