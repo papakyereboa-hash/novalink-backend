@@ -57,6 +57,16 @@ const pool = new Pool({
   },
 });
 
+// TEST DATABASE CONNECTION
+pool.query("SELECT NOW()")
+  .then(() => {
+    console.log("DATABASE CONNECTED");
+  })
+  .catch((err) => {
+    console.log("DATABASE ERROR:");
+    console.log(err);
+  });
+  
 // GET PLANS
 app.get("/api/plans", async (req, res) => {
   try {
