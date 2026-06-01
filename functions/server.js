@@ -230,39 +230,44 @@ app.post("/api/buy-data", async (req, res) => {
     );
 
     console.log("REMADATA RESPONSE:");
-console.log(response.data);
-
 console.log("ABOUT TO SAVE ORDER");
 
-/* SAVE ORDER */
+try {
 
-await pool.query(
-  `
-  INSERT INTO orders
-  (
-    phone,
-    bundle,
-    amount,
-    reference,
-    status
-  )
-  VALUES
-  (
-    $1,$2,$3,$4,$5
-  )
-  `,
-  [
-    phone,
-    bundle,
-    amount,
-    reference,
-    "SUCCESS"
-  ]
-);
+  await pool.query(
+    `
+    INSERT INTO orders
+    (
+      phone,
+      bundle,
+      amount,
+      reference,
+      status
+    )
+    VALUES
+    (
+      $1,$2,$3,$4,$5
+    )
+    `,
+    [
+      phone,
+      bundle,
+      amount,
+      reference,
+      "SUCCESS"
+    ]
+  );
 
-console.log("ORDER SAVED");
+  console.log("ORDER SAVED");
 
-res.json(response.data);
+} catch (dbErr) {
+
+  console.log("DATABASE INSERT ERROR");
+  console.log(dbErr);
+
+  throw dbErr;
+}
+
 res.json(response.data);
 
   } catch (err) {
