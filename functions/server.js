@@ -7,6 +7,7 @@ const cors = require("cors");
 const { Pool } = require("pg");
 const rateLimit = require("express-rate-limit");
 const helmet = require("helmet");
+const { v4: uuidv4 } = require("uuid");
 
 const app = express();
 
@@ -97,9 +98,7 @@ app.post("/api/users", async (req, res) => {
 
 // GET REMADATA BUNDLES
 app.get("/api/remadata-bundles", async (req, res) => {
-
   try {
-
     const response = await axios.get(
       "https://remadata.com/api/bundles?network=mtn",
       {
@@ -111,12 +110,8 @@ app.get("/api/remadata-bundles", async (req, res) => {
     );
 
     res.json(response.data);
-
   } catch (err) {
-
-    console.error(
-      err.response?.data || err.message
-    );
+    console.error(err.response?.data || err.message);
 
     res.status(500).send(
       "Error fetching RemaData bundles"
@@ -124,28 +119,9 @@ app.get("/api/remadata-bundles", async (req, res) => {
   }
 });
 
-// BUY DATA
-app.post("/api/buy-data", async (req, res) => {
-
-  try {
-
-    console.log("REQUEST RECEIVED");
-    console.log(req.body);
-
-    const { phone, volumeInMB } = req.body;
-
-    if (!phone || !volumeInMB) {
-  return res.status(400).json({
-    success: false,
-    message: "Phone and volume are required"
-  });
-}
-
 // INITIALIZE PAYSTACK PAYMENT
 app.post("/api/paystack/initialize", async (req, res) => {
-
   try {
-
     const { email, amount, phone, volumeInMB } = req.body;
 
     if (!email || !amount || !phone || !volumeInMB) {
@@ -182,10 +158,7 @@ app.post("/api/paystack/initialize", async (req, res) => {
     });
 
   } catch (err) {
-
-    console.log(
-      err.response?.data || err.message
-    );
+    console.log(err.response?.data || err.message);
 
     res.status(500).json({
       success: false,
@@ -194,30 +167,51 @@ app.post("/api/paystack/initialize", async (req, res) => {
   }
 });
 
-const cleanPhone = phone.toString().trim();
+// BUY DATA
+app.post("/api/buy-data", async (req, res) => {
+  try {
+    console.log("REQUEST RECEIVED");
+    console.log(req.body);
 
-const ghanaPhoneRegex = /^0\d{9}$/;
+    const {
+  phone,
+  volumeInMB,
+  bundle,
+  amount,
+  reference
+} = req.body;
 
-if (!ghanaPhoneRegex.test(cleanPhone)) {
-  return res.status(400).json({
-    success: false,
-    message: "Invalid Ghana phone number"
-  });
-}
+    if (!phone || !volumeInMB) {
+      return res.status(400).json({
+        success: false,
+        message: "Phone and volume are required"
+      });
+    }
 
-if (isNaN(volumeInMB)) {
-  return res.status(400).json({
-    success: false,
-    message: "Invalid volume"
-  });
-}
+    const cleanPhone = phone.toString().trim();
+
+    const ghanaPhoneRegex = /^0\d{9}$/;
+
+    if (!ghanaPhoneRegex.test(cleanPhone)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Ghana phone number"
+      });
+    }
+
+    if (isNaN(volumeInMB)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid volume"
+      });
+    }
 
     console.log("PHONE:", phone);
     console.log("VOLUME:", volumeInMB);
 
     const payload = {
-      phone: phone,
-      volumeInMB: volumeInMB,
+      phone,
+      volumeInMB,
       networkType: "mtn"
     };
 
@@ -236,17 +230,42 @@ if (isNaN(volumeInMB)) {
     );
 
     console.log("REMADATA RESPONSE:");
-    console.log(response.data);
+console.log(response.data);
 
-    res.json(response.data);
+/* SAVE ORDER */
+
+await pool.query(
+  `
+  INSERT INTO orders
+  (
+    phone,
+    bundle,
+    amount,
+    reference,
+    status
+  )
+  VALUES
+  (
+    $1,$2,$3,$4,$5
+  )
+  `,
+  [
+    phone,
+    bundle,
+    amount,
+    reference,
+    "SUCCESS"
+  ]
+);
+
+console.log("ORDER SAVED");
+
+res.json(response.data);
+res.json(response.data);
 
   } catch (err) {
-
     console.log("FULL ERROR:");
-
-    console.log(
-      err.response?.data || err.message
-    );
+    console.log(err.response?.data || err.message);
 
     res.status(500).json({
       success: false,
@@ -257,9 +276,7 @@ if (isNaN(volumeInMB)) {
 
 // CHECK ORDER STATUS
 app.get("/api/check-order/:ref", async (req, res) => {
-
   try {
-
     console.log("CHECK ORDER REQUEST RECEIVED");
 
     const ref = req.params.ref;
@@ -276,16 +293,52 @@ app.get("/api/check-order/:ref", async (req, res) => {
     res.json(response.data);
 
   } catch (err) {
+    console.log(err.response?.data || err.message);
 
-    console.log(
-      err.response?.data || err.message
-    );
-
-    res.status(500).send(
-      "Error checking order"
-    );
+    res.status(500).send("Error checking order");
   }
 });
+
+
+// TRACK ORDER
+app.get("/api/track-order", async (req, res) => {
+  try {
+
+    const { phone, date } = req.query;
+
+    if (!phone || !date) {
+      return res.status(400).json({
+        success: false,
+        message: "Phone and date required"
+      });
+    }
+
+    const result = await pool.query(
+      `
+      SELECT *
+      FROM orders
+      WHERE phone = $1
+      AND DATE(created_at) = $2
+      ORDER BY created_at DESC
+      `,
+      [phone, date]
+    );
+
+    res.json({
+      success: true,
+      orders: result.rows
+    });
+
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch orders"
+    });
+  }
+});
+
 
 // START SERVER
 const PORT = process.env.PORT || 5000;
@@ -293,5 +346,3 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
-const { v4: uuidv4 } = require("uuid");
