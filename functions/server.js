@@ -232,6 +232,8 @@ app.post("/api/buy-data", async (req, res) => {
     console.log("REMADATA RESPONSE:");
 console.log(response.data);
 
+console.log("ABOUT TO SAVE ORDER");
+
 /* SAVE ORDER */
 
 await pool.query(
