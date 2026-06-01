@@ -304,14 +304,13 @@ function back(){
    SEND DATA FUNCTION
 ========================= */
 
-async function sendData(phone){
+async function sendData(phone, reference){
 
   try{
 
     const res = await fetch(
       "https://novalink-backend-eyp1.onrender.com/api/buy-data",
       {
-
         method: "POST",
 
         headers:{
@@ -320,10 +319,16 @@ async function sendData(phone){
 
         body: JSON.stringify({
 
-          phone: phone,
+          phone,
 
           volumeInMB:
-            Number(bundle.replace("GB","")) * 1000
+            Number(bundle.replace("GB","")) * 1000,
+
+          bundle,
+
+          amount: price,
+
+          reference
 
         })
 
@@ -345,7 +350,6 @@ async function sendData(phone){
   }
 
 }
-
 /* =========================
    PAYSTACK
 ========================= */
@@ -395,24 +399,25 @@ function pay(){
 
       callback: function(response){
 
-        console.log("PAYMENT SUCCESS");
+  alert("PAYMENT SUCCESS");
 
-        console.log(response);
+  console.log("PAYMENT SUCCESS");
 
-        /* SEND DATA */
+  console.log(response);
 
-        sendData(phone);
+  console.log("REFERENCE:", response.reference);
 
-        /* SHOW SUCCESS */
+  sendData(
+    phone,
+    response.reference
+  );
 
-        document.getElementById("mainBox")
-          .style.display = "none";
+  document.getElementById("mainBox")
+    .style.display = "none";
 
-        document.getElementById("success")
-          .style.display = "block";
-
-      },
-
+  document.getElementById("success")
+    .style.display = "block";
+},
       onClose: function(){
 
         alert("Payment cancelled");
