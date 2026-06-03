@@ -11,6 +11,8 @@ const { v4: uuidv4 } = require("uuid");
 
 const app = express();
 
+app.set("trust proxy", 1);
+
 // RATE LIMITER
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
