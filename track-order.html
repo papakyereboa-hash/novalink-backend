@@ -84,6 +84,15 @@ h1{
     outline:none;
 }
 
+.order-card{
+    margin-top:15px;
+    padding:20px;
+    border-radius:20px;
+    background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.15);
+    box-shadow:0 0 20px rgba(255,255,255,.08);
+}
+
 .input-box input::placeholder{
     color:#bdbdbd;
 }
@@ -157,14 +166,6 @@ h1{
 
 .result{
     margin-top:30px;
-}
-
-.order-card{
-    margin-top:15px;
-    padding:20px;
-    border-radius:20px;
-    background:rgba(255,255,255,.05);
-    border:1px solid rgba(255,255,255,.1);
 }
 
 .status-btn{
@@ -271,6 +272,20 @@ placeholder="Enter Phone Number">
 
 <script>
 
+    function newSearch(){
+
+document.getElementById("phone").value = "";
+document.getElementById("orderDate").value = "";
+document.getElementById("result").innerHTML = "";
+
+}
+
+function goStore(){
+
+window.location.href = "index.html";
+
+}
+
 async function trackOrder(){
 
 const phone =
@@ -314,11 +329,65 @@ if(!data.orders || data.orders.length === 0){
     return;
 }
 
-let html = "";
+let html = `
+
+<h3 style="
+text-align:center;
+margin-bottom:15px;
+color:#00ff84;
+">
+📦 ${data.orders.length} Orders Found
+</h3>
+
+<div style="
+display:flex;
+gap:10px;
+justify-content:center;
+margin-bottom:15px;
+">
+
+<button onclick="newSearch()" style="
+padding:10px 15px;
+border:none;
+border-radius:15px;
+cursor:pointer;
+font-weight:bold;
+">
+🔄 New Search
+</button>
+
+<button onclick="goStore()" style="
+padding:10px 15px;
+border:none;
+border-radius:15px;
+cursor:pointer;
+font-weight:bold;
+background:#00ff84;
+">
+🏠 Store
+</button>
+
+</div>
+
+`;
 
 data.orders.forEach(order => {
 
+let statusColor = "#00ff84";
+let statusIcon = "✅";
+
+if(order.status === "PENDING"){
+    statusColor = "#ffb300";
+    statusIcon = "⏳";
+}
+
+if(order.status === "FAILED"){
+    statusColor = "#ff4444";
+    statusIcon = "❌";
+}
+
 html += `
+
 <div class="order-card">
 
 <p><b>Reference:</b> ${order.reference}</p>
@@ -331,15 +400,22 @@ html += `
 ${new Date(order.created_at).toLocaleString()}
 </p>
 
-<button
-class="status-btn"
-onclick="showStatus(this,'${order.status}')">
-Check Status
-</button>
-
-<div class="status-result"></div>
+<div style="
+margin-top:15px;
+padding:12px;
+border-radius:15px;
+background:${statusColor};
+box-shadow:0 0 15px ${statusColor};
+letter-spacing:1px;
+color:white;
+font-weight:bold;
+text-align:center;
+">
+${statusIcon} ${order.status}
+</div>
 
 </div>
+
 `;
 
 });
@@ -357,38 +433,6 @@ result.innerHTML = `
 `;
 
 }
-}
-
-function showStatus(button,status){
-
-    let color = "#00ff84";
-    let icon = "✅";
-
-    if(status === "PENDING"){
-        color = "#ffb300";
-        icon = "⏳";
-    }
-
-    if(status === "FAILED"){
-        color = "#ff4444";
-        icon = "❌";
-    }
-
-    button.nextElementSibling.innerHTML = `
-        <div style="
-            display:inline-block;
-            padding:10px 18px;
-            border-radius:20px;
-            background:${color};
-            color:white;
-            font-weight:bold;
-            margin-top:10px;
-        ">
-            ${icon} ${status}
-        </div>
-    `;
-
-    button.innerText = "Refresh Status";
 }
 
 </script>
